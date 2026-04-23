@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: zing-landing
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_SUPABASE_URL
+        value: https://ndjebnucnuxmyioclxez.supabase.co
+      - key: VITE_SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kamVibnVjbnV4bXlpb2NseGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODg0MTYsImV4cCI6MjA5MjQ2NDQxNn0.8o0QiLP6XwO4ftzjnNYQpTUN48h92DTUC5Qx9auJ63c
+      - key: VITE_ADMIN_PASSWORD
+        value: zing2026
