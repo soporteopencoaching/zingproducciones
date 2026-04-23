@@ -17,7 +17,7 @@ export default function Galeria() {
   const intervalRef = useRef()
 
   useEffect(() => {
-    supabase.from('eventos').select('*').eq('activo', true).single()
+    supabase.from('eventos').select('*').eq('activo', true).maybeSingle()
       .then(({ data }) => { setEvento(data); setLoading(false) })
   }, [])
 

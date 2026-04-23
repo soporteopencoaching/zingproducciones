@@ -9,7 +9,7 @@ export default function Landing() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    supabase.from('eventos').select('*').eq('activo', true).single()
+    supabase.from('eventos').select('*').eq('activo', true).maybeSingle()
       .then(({ data }) => { setEvento(data); setLoading(false) })
   }, [])
 
