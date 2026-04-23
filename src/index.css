@@ -6,13 +6,65 @@
   box-sizing: border-box;
 }
 
+:root {
+  --zing-orange: #FF6600;
+  --zing-yellow: #FFAA00;
+  --zing-pink: #E8245A;
+  --zing-purple: #3A0878;
+  --zing-dark: #1A1A22;
+}
+
 body {
-  font-family: 'Georgia', serif;
-  background: #0a0a0a;
+  font-family: 'Arial', sans-serif;
+  background: var(--zing-dark);
   color: #fff;
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
+}
+
+.zing-gradient-text {
+  background: linear-gradient(180deg, #FFCC00 0%, #FF6600 50%, #E8245A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.zing-btn-primary {
+  background: linear-gradient(135deg, #FFAA00 0%, #FF6600 50%, #E8245A 100%);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.zing-btn-primary:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+.zing-btn-secondary {
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 2px solid rgba(255, 102, 0, 0.6);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.zing-btn-secondary:hover {
+  border-color: #FF6600;
+  background: rgba(255, 102, 0, 0.1);
+}
+
+.zing-glow {
+  box-shadow: 0 0 30px rgba(255, 102, 0, 0.3), 0 0 60px rgba(232, 36, 90, 0.15);
 }

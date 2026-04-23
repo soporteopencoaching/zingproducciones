@@ -13,9 +13,7 @@ export default function Admin() {
   const portadaRef = useRef()
   const bookRef = useRef()
 
-  useEffect(() => {
-    if (authed) cargarEventos()
-  }, [authed])
+  useEffect(() => { if (authed) cargarEventos() }, [authed])
 
   async function cargarEventos() {
     const { data } = await supabase.from('eventos').select('*').order('created_at', { ascending: false })
@@ -29,28 +27,13 @@ export default function Admin() {
   }
 
   function nuevoEvento() {
-    setForm({
-      id: null,
-      slug: '',
-      nombre: '',
-      fecha: '',
-      foto_portada_url: '',
-      fotos_book: [],
-      link_subir_foto: '',
-      link_descargar_foto: '',
-      activo: false,
-    })
-    setMsg('')
-  }
-
-  function editarEvento(ev) {
-    setForm({ ...ev })
+    setForm({ id: null, slug: '', nombre: '', fecha: '', foto_portada_url: '', fotos_book: [], link_subir_foto: '', link_descargar_foto: '', activo: false })
     setMsg('')
   }
 
   async function subirImagen(file, carpeta) {
     const ext = file.name.split('.').pop()
-    const nombre = `${carpeta}/${Date.now()}.${ext}`
+    const nombre = `${carpeta}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
     const { error } = await supabase.storage.from('zing-fotos').upload(nombre, file, { upsert: true })
     if (error) throw error
     const { data } = supabase.storage.from('zing-fotos').getPublicUrl(nombre)
@@ -64,26 +47,20 @@ export default function Admin() {
     try {
       let datos = { ...form }
 
-      // Subir foto portada si eligieron archivo
       if (portadaRef.current?.files[0]) {
         datos.foto_portada_url = await subirImagen(portadaRef.current.files[0], 'portadas')
       }
 
-      // Subir fotos del book si eligieron archivos
       if (bookRef.current?.files?.length > 0) {
-        const nuevasUrls = await Promise.all(
-          Array.from(bookRef.current.files).map(f => subirImagen(f, 'book'))
-        )
-        datos.fotos_book = [...(datos.fotos_book || []), ...nuevasUrls]
+        const nuevas = await Promise.all(Array.from(bookRef.current.files).map(f => subirImagen(f, 'book')))
+        datos.fotos_book = [...(datos.fotos_book || []), ...nuevas]
       }
 
       if (datos.activo) {
-        // Desactivar todos los demás
         await supabase.from('eventos').update({ activo: false }).neq('id', datos.id || '00000000-0000-0000-0000-000000000000')
       }
 
       const { id, ...campos } = datos
-
       if (id) {
         await supabase.from('eventos').update(campos).eq('id', id)
       } else {
@@ -106,8 +83,7 @@ export default function Admin() {
   }
 
   async function eliminarFotoBook(idx) {
-    const nuevas = form.fotos_book.filter((_, i) => i !== idx)
-    setForm(f => ({ ...f, fotos_book: nuevas }))
+    setForm(f => ({ ...f, fotos_book: f.fotos_book.filter((_, i) => i !== idx) }))
   }
 
   async function eliminarEvento(id) {
@@ -116,168 +92,154 @@ export default function Admin() {
     cargarEventos()
   }
 
+  // LOGIN
   if (!authed) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
-        <form onSubmit={login} className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 w-full max-w-sm space-y-4">
-          <p className="text-amber-400 text-center text-sm tracking-widest uppercase">Zing Admin</p>
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={pass}
-            onChange={e => setPass(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-3 text-white text-sm outline-none focus:border-amber-400"
-          />
-          <button type="submit" className="w-full bg-amber-400 text-black font-semibold py-3 rounded text-sm tracking-wide hover:bg-amber-300 transition-colors">
-            Entrar
-          </button>
-        </form>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#1A1A22' }}>
+        <div className="w-full max-w-sm">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <span className="zing-gradient-text font-black text-5xl" style={{ fontFamily: 'Impact, Arial Black, sans-serif', filter: 'drop-shadow(0 0 12px rgba(255,102,0,0.5))' }}>
+              Zing
+            </span>
+            <p className="text-white/40 text-xs tracking-widest uppercase mt-1">Admin Panel</p>
+          </div>
+
+          <form onSubmit={login} className="rounded-xl p-8 space-y-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,102,0,0.2)' }}>
+            <input
+              type="password"
+              placeholder="Contraseña"
+              value={pass}
+              onChange={e => setPass(e.target.value)}
+              className="w-full rounded-lg px-4 py-3 text-white text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,102,0,0.3)' }}
+            />
+            <button type="submit" className="zing-btn-primary w-full py-3 rounded-lg text-sm">
+              Entrar
+            </button>
+          </form>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white px-4 py-8">
+    <div className="min-h-screen px-4 py-8" style={{ background: '#1A1A22' }}>
       <div className="max-w-3xl mx-auto">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <p className="text-amber-400 text-xs tracking-widest uppercase">Zing Producciones</p>
-            <h1 className="text-2xl font-light mt-1">Panel de eventos</h1>
+            <span className="zing-gradient-text font-black text-3xl" style={{ fontFamily: 'Impact, Arial Black, sans-serif', filter: 'drop-shadow(0 0 8px rgba(255,102,0,0.4))' }}>
+              Zing
+            </span>
+            <p className="text-white/40 text-xs tracking-widest uppercase">Panel de eventos</p>
           </div>
-          <button
-            onClick={nuevoEvento}
-            className="bg-amber-400 text-black text-sm font-semibold px-5 py-2.5 rounded hover:bg-amber-300 transition-colors"
-          >
+          <button onClick={nuevoEvento} className="zing-btn-primary px-5 py-2.5 rounded-lg text-sm">
             + Nuevo evento
           </button>
         </div>
 
+        {/* Barra de color */}
+        <div className="h-px mb-8" style={{ background: 'linear-gradient(90deg, #FFAA00, #FF6600, #E8245A, transparent)' }} />
+
         {msg && (
-          <div className={`mb-6 px-4 py-3 rounded text-sm ${msg.startsWith('Error') ? 'bg-red-900/50 text-red-300 border border-red-700' : 'bg-green-900/50 text-green-300 border border-green-700'}`}>
+          <div className={`mb-6 px-4 py-3 rounded-lg text-sm ${msg.startsWith('Error') ? 'bg-red-900/30 text-red-300 border border-red-700/50' : 'border text-green-300'}`}
+            style={msg.startsWith('Error') ? {} : { background: 'rgba(255,102,0,0.1)', borderColor: 'rgba(255,102,0,0.4)', color: '#FFAA00' }}>
             {msg}
           </div>
         )}
 
         {/* Formulario */}
         {form && (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 mb-8">
-            <h2 className="text-lg font-light mb-6 text-zinc-300">
+          <div className="rounded-xl p-6 mb-8" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,102,0,0.2)' }}>
+            <h2 className="text-lg font-semibold mb-6" style={{ color: '#FF6600' }}>
               {form.id ? 'Editar evento' : 'Nuevo evento'}
             </h2>
-            <form onSubmit={guardar} className="space-y-5">
 
+            <form onSubmit={guardar} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs text-zinc-400 tracking-wide uppercase block mb-1.5">Nombre</label>
+                <Field label="Nombre">
                   <input
                     required
                     value={form.nombre}
                     onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
                     placeholder="Ej: Sofía"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2.5 text-white text-sm outline-none focus:border-amber-400"
+                    className="input-zing"
                   />
-                </div>
-                <div>
-                  <label className="text-xs text-zinc-400 tracking-wide uppercase block mb-1.5">Fecha</label>
+                </Field>
+                <Field label="Fecha">
                   <input
                     type="date"
                     value={form.fecha}
                     onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2.5 text-white text-sm outline-none focus:border-amber-400"
+                    className="input-zing"
                   />
-                </div>
+                </Field>
               </div>
 
-              <div>
-                <label className="text-xs text-zinc-400 tracking-wide uppercase block mb-1.5">Foto de portada</label>
+              <Field label="Foto de portada">
                 {form.foto_portada_url && (
-                  <img src={form.foto_portada_url} alt="portada" className="w-32 h-32 object-cover rounded mb-2" />
+                  <img src={form.foto_portada_url} alt="portada" className="w-32 h-32 object-cover rounded-lg mb-2" />
                 )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={portadaRef}
-                  className="text-sm text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-zinc-700 file:text-white hover:file:bg-zinc-600"
-                />
-              </div>
+                <input type="file" accept="image/*" ref={portadaRef} className="file-zing" />
+              </Field>
 
-              <div>
-                <label className="text-xs text-zinc-400 tracking-wide uppercase block mb-1.5">Link — Subí tu foto</label>
+              <Field label="Link — Subí tu foto">
                 <input
                   type="url"
                   value={form.link_subir_foto}
                   onChange={e => setForm(f => ({ ...f, link_subir_foto: e.target.value }))}
                   placeholder="https://drive.google.com/..."
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2.5 text-white text-sm outline-none focus:border-amber-400"
+                  className="input-zing"
                 />
-              </div>
+              </Field>
 
-              <div>
-                <label className="text-xs text-zinc-400 tracking-wide uppercase block mb-1.5">Link — Descarga tu foto en vivo</label>
+              <Field label="Link — Descarga tu foto en vivo">
                 <input
                   type="url"
                   value={form.link_descargar_foto}
                   onChange={e => setForm(f => ({ ...f, link_descargar_foto: e.target.value }))}
                   placeholder="https://drive.google.com/..."
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2.5 text-white text-sm outline-none focus:border-amber-400"
+                  className="input-zing"
                 />
-              </div>
+              </Field>
 
-              <div>
-                <label className="text-xs text-zinc-400 tracking-wide uppercase block mb-1.5">
-                  Fotos del book ({form.fotos_book?.length || 0} cargadas)
-                </label>
+              <Field label={`Fotos del book (${form.fotos_book?.length || 0} cargadas)`}>
                 {form.fotos_book?.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
                     {form.fotos_book.map((url, i) => (
                       <div key={i} className="relative group">
-                        <img src={url} alt="" className="w-16 h-16 object-cover rounded" />
+                        <img src={url} alt="" className="w-16 h-16 object-cover rounded-lg" />
                         <button
                           type="button"
                           onClick={() => eliminarFotoBook(i)}
-                          className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          ×
-                        </button>
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          style={{ background: '#E8245A' }}
+                        >×</button>
                       </div>
                     ))}
                   </div>
                 )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  ref={bookRef}
-                  className="text-sm text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-zinc-700 file:text-white hover:file:bg-zinc-600"
-                />
-                <p className="text-xs text-zinc-600 mt-1">Podés agregar de a lote, las fotos se acumulan.</p>
-              </div>
+                <input type="file" accept="image/*" multiple ref={bookRef} className="file-zing" />
+                <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Las fotos se acumulan cada vez que guardás.</p>
+              </Field>
 
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={form.activo}
                   onChange={e => setForm(f => ({ ...f, activo: e.target.checked }))}
-                  className="w-4 h-4 accent-amber-400"
+                  className="w-4 h-4"
                 />
-                <span className="text-sm text-zinc-300">Activar este evento (desactiva los demás)</span>
+                <span className="text-sm text-white/70">Activar este evento (desactiva los demás)</span>
               </label>
 
               <div className="flex gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="bg-amber-400 text-black font-semibold text-sm px-6 py-2.5 rounded hover:bg-amber-300 transition-colors disabled:opacity-50"
-                >
+                <button type="submit" disabled={saving} className="zing-btn-primary px-6 py-2.5 rounded-lg text-sm disabled:opacity-50">
                   {saving ? 'Guardando...' : 'Guardar'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setForm(null)}
-                  className="text-sm text-zinc-400 px-4 py-2.5 hover:text-white transition-colors"
-                >
+                <button type="button" onClick={() => setForm(null)} className="text-sm px-4 py-2.5 text-white/40 hover:text-white transition-colors">
                   Cancelar
                 </button>
               </div>
@@ -285,50 +247,45 @@ export default function Admin() {
           </div>
         )}
 
-        {/* Lista de eventos */}
+        {/* Lista eventos */}
         <div className="space-y-3">
           {eventos.length === 0 && (
-            <p className="text-zinc-600 text-sm text-center py-8">No hay eventos todavía. Creá uno.</p>
+            <p className="text-center py-12 text-white/30 text-sm">No hay eventos. Creá uno.</p>
           )}
           {eventos.map(ev => (
             <div
               key={ev.id}
-              className={`flex items-center gap-4 bg-zinc-900 border rounded-lg p-4 ${ev.activo ? 'border-amber-400/50' : 'border-zinc-800'}`}
+              className="flex items-center gap-4 rounded-xl p-4"
+              style={{
+                background: ev.activo ? 'rgba(255,102,0,0.08)' : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${ev.activo ? 'rgba(255,102,0,0.4)' : 'rgba(255,255,255,0.06)'}`
+              }}
             >
               {ev.foto_portada_url
-                ? <img src={ev.foto_portada_url} alt="" className="w-14 h-14 object-cover rounded flex-shrink-0" />
-                : <div className="w-14 h-14 bg-zinc-800 rounded flex-shrink-0" />
+                ? <img src={ev.foto_portada_url} alt="" className="w-14 h-14 object-cover rounded-lg flex-shrink-0" />
+                : <div className="w-14 h-14 rounded-lg flex-shrink-0" style={{ background: 'rgba(255,102,0,0.1)' }} />
               }
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-white truncate">{ev.nombre}</p>
-                <p className="text-xs text-zinc-500 mt-0.5">
+                <p className="font-bold text-white truncate">{ev.nombre}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
                   {ev.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-AR') : 'Sin fecha'} · {ev.fotos_book?.length || 0} fotos
                 </p>
                 {ev.activo && (
-                  <span className="inline-block text-xs bg-amber-400/20 text-amber-400 border border-amber-400/30 rounded px-2 py-0.5 mt-1">
-                    Activo
+                  <span className="inline-block text-xs font-bold rounded px-2 py-0.5 mt-1.5" style={{ background: 'rgba(255,102,0,0.2)', color: '#FFAA00', border: '1px solid rgba(255,170,0,0.3)' }}>
+                    ACTIVO
                   </span>
                 )}
               </div>
               <div className="flex gap-2 flex-shrink-0">
                 {!ev.activo && (
-                  <button
-                    onClick={() => activar(ev.id)}
-                    className="text-xs text-zinc-400 border border-zinc-700 px-3 py-1.5 rounded hover:border-amber-400 hover:text-amber-400 transition-colors"
-                  >
+                  <button onClick={() => activar(ev.id)} className="text-xs px-3 py-1.5 rounded-lg transition-colors" style={{ border: '1px solid rgba(255,102,0,0.3)', color: '#FF6600' }}>
                     Activar
                   </button>
                 )}
-                <button
-                  onClick={() => editarEvento(ev)}
-                  className="text-xs text-zinc-400 border border-zinc-700 px-3 py-1.5 rounded hover:border-white hover:text-white transition-colors"
-                >
+                <button onClick={() => { setForm({ ...ev }); setMsg('') }} className="text-xs px-3 py-1.5 rounded-lg text-white/60 transition-colors hover:text-white" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
                   Editar
                 </button>
-                <button
-                  onClick={() => eliminarEvento(ev.id)}
-                  className="text-xs text-red-400/60 border border-zinc-800 px-3 py-1.5 rounded hover:border-red-500 hover:text-red-400 transition-colors"
-                >
+                <button onClick={() => eliminarEvento(ev.id)} className="text-xs px-3 py-1.5 rounded-lg transition-colors" style={{ border: '1px solid rgba(232,36,90,0.2)', color: 'rgba(232,36,90,0.6)' }}>
                   Eliminar
                 </button>
               </div>
@@ -336,13 +293,56 @@ export default function Admin() {
           ))}
         </div>
 
-        {/* Preview link */}
         <div className="mt-8 text-center">
-          <a href="/" target="_blank" className="text-xs text-zinc-600 hover:text-amber-400 transition-colors tracking-widest uppercase">
+          <a href="/" target="_blank" className="text-xs tracking-widest uppercase transition-colors" style={{ color: 'rgba(255,102,0,0.5)' }}>
             Ver la landing →
           </a>
         </div>
       </div>
+
+      <style>{`
+        .input-zing {
+          width: 100%;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,102,0,0.25);
+          border-radius: 8px;
+          padding: 10px 16px;
+          color: white;
+          font-size: 14px;
+          outline: none;
+          transition: border-color 0.2s;
+        }
+        .input-zing:focus { border-color: #FF6600; }
+        .input-zing::placeholder { color: rgba(255,255,255,0.3); }
+        .input-zing[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+        .file-zing {
+          font-size: 13px;
+          color: rgba(255,255,255,0.4);
+        }
+        .file-zing::file-selector-button {
+          margin-right: 12px;
+          padding: 6px 14px;
+          border-radius: 6px;
+          border: 1px solid rgba(255,102,0,0.4);
+          background: rgba(255,102,0,0.1);
+          color: #FF6600;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .file-zing::file-selector-button:hover {
+          background: rgba(255,102,0,0.2);
+        }
+      `}</style>
+    </div>
+  )
+}
+
+function Field({ label, children }) {
+  return (
+    <div>
+      <label className="text-xs font-bold tracking-wider uppercase block mb-1.5" style={{ color: 'rgba(255,170,0,0.7)' }}>{label}</label>
+      {children}
     </div>
   )
 }
